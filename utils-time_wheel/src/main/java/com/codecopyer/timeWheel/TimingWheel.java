@@ -1,6 +1,7 @@
 package com.codecopyer.timeWheel;
 
-import javax.annotation.concurrent.NotThreadSafe;
+import net.jcip.annotations.NotThreadSafe;
+
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -29,6 +30,9 @@ public class TimingWheel {
     private volatile TimingWheel overflowWheel;
 
     private TimerTaskList[] buckets;
+
+    public TimingWheel() {
+    }
 
     public TimingWheel(Long tickMs, Integer wheelSize, Long startMs, AtomicInteger taskCounter, DelayQueue<TimerTaskList> queue) {
         this.tickMs = tickMs;

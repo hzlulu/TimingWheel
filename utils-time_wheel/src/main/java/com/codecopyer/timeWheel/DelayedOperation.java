@@ -1,5 +1,10 @@
 package com.codecopyer.timeWheel;
 
+import java.util.Date;
+
+/**
+ * @author guest
+ */
 public class DelayedOperation extends TimerTask {
 
     public DelayedOperation(long delayMs) {
@@ -8,11 +13,6 @@ public class DelayedOperation extends TimerTask {
 
     @Override
     public void run() {
-        System.out.println("biz do"+ System.currentTimeMillis());
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        System.out.println(" do the job" + new Date());
     }
 }

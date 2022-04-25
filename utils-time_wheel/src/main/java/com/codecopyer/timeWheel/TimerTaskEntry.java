@@ -1,7 +1,6 @@
 package com.codecopyer.timeWheel;
 
 
-
 /**
  * 封装定时任务
  *
@@ -59,15 +58,7 @@ public class TimerTaskEntry implements Comparable<TimerTaskEntry> {
         if (that == null) {
             throw new NullPointerException("TimerTaskEntry is null");
         }
-        Long expirationMs1 = this.expirationMs;
-        Long expirationMs2 = that.expirationMs;
-        if (expirationMs1 < expirationMs2) {
-            return -1;
-        }
-        if (expirationMs1 > expirationMs2) {
-            return 1;
-        }
-        return 0;
+        return Long.compare(this.expirationMs, that.expirationMs);
     }
 
 

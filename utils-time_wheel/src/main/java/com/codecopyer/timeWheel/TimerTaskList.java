@@ -1,13 +1,20 @@
 package com.codecopyer.timeWheel;
 
 
+import net.jcip.annotations.ThreadSafe;
+
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
-class TimerTaskList implements Delayed{
+
+/**
+ * @author guest
+ */
+@ThreadSafe
+class TimerTaskList implements Delayed {
 
 
     private AtomicInteger taskCounter;
@@ -33,43 +40,44 @@ class TimerTaskList implements Delayed{
     }
 
     /**
-     * 设置bucket到期时间
+     * Set the bucket's expiration time
      *
-     * @param expirationMs 到期时间
-     * @return true 如果到期时间被改变
+     * @return true if the expiration time is changed
      */
     public boolean setExpiration(Long expirationMs) {
         return expiration.getAndSet(expirationMs) != expirationMs;
     }
 
     /**
-     * 获取bucket到期时间
+     * Get the bucket's expiration time
      *
-     * @return 到期时间
+     * @return expiration time
      */
     public Long getExpiration() {
         return expiration.get();
     }
 
     /**
-     * 将提供的函数应用于此列表中的每个任务
-     *
-     * @param f 需要执行的函数
+     * Apply the supplied function to each of tasks in this list
      */
-    public synchronized void foreach(Function<TimerTask, Void> f) {
-        TimerTaskEntry entry = root.next;
-        while (entry != root) {
-            TimerTaskEntry nextEntry = entry.next;
+    public void foreach(Function<TimerTask, Void> f) {
+        synchronized (this) {
+            TimerTaskEntry entry = root.next;
+            while (entry != root) {
+                TimerTaskEntry nextEntry = entry.next;
 
-            if (!entry.cancelled()) {
-                f.apply(entry.getTimerTask());
+                if (!entry.cancelled()) {
+                    f.apply(entry.getTimerTask());
+                }
+
+                entry = nextEntry;
             }
-
-            entry = nextEntry;
         }
     }
 
-    // Add a timer task entry to this list
+    /**
+     * Add a timer task entry to this list
+     */
     public void add(TimerTaskEntry timerTaskEntry) {
         boolean done = false;
         while (!done) {
@@ -77,7 +85,6 @@ class TimerTaskList implements Delayed{
             // We do this outside of the sync block below to avoid deadlocking.
             // We may retry until timerTaskEntry.list becomes null.
             timerTaskEntry.remove();
-
             synchronized (this) {
                 synchronized (timerTaskEntry) {
                     if (timerTaskEntry.getList() == null) {
@@ -96,7 +103,9 @@ class TimerTaskList implements Delayed{
         }
     }
 
-    // Remove the specified timer task entry from this list
+    /**
+     * Remove the specified timer task entry from this list
+     */
     public void remove(TimerTaskEntry timerTaskEntry) {
         synchronized (this) {
             synchronized (timerTaskEntry) {
@@ -112,7 +121,9 @@ class TimerTaskList implements Delayed{
         }
     }
 
-    // Remove all task entries and apply the supplied function to each of them
+    /**
+     * Remove all task entries and apply the supplied function to each of them
+     */
     public void flush(Function<TimerTaskEntry, Void> f) {
         synchronized (this) {
             TimerTaskEntry head = root.next;
@@ -138,13 +149,6 @@ class TimerTaskList implements Delayed{
         } else {
             throw new ClassCastException("can not cast to TimerTaskList");
         }
-
-        if (getExpiration() < other.getExpiration()) {
-            return -1;
-        } else if (getExpiration() > other.getExpiration()) {
-            return 1;
-        } else {
-            return 0;
-        }
+        return Long.compare(getExpiration(), other.getExpiration());
     }
 }

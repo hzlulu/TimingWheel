@@ -4,14 +4,17 @@ public class SystemTimerTest {
     public static void main(String[] args) {
         SystemTimer systemTimer = new SystemTimer("timer");
         System.out.println(System.currentTimeMillis());
-        for (int i = 0; i < 100; i++) {
-            systemTimer.add(new DelayedOperation(500+i));
-        }
+        systemTimer.add(new DelayedOperation(5000));
+        systemTimer.add(new DelayedOperation(7000));
+        systemTimer.add(new DelayedOperation(10000));
+        systemTimer.add(new DelayedOperation(14000));
         System.out.println(System.nanoTime());
         boolean flag = true;
         while (flag) {
             boolean b = systemTimer.advanceClock(200);
-//            flag = b;
+            if (b) {
+                System.out.println(systemTimer.size());
+            }
         }
     }
 }

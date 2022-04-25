@@ -7,44 +7,30 @@ import java.util.function.Function;
 
 public class SystemTimer implements Timer, Function<TimerTaskEntry, Void> {
 
-    private ExecutorService taskExecutor;
+    private final ExecutorService taskExecutor;
 
-    private String executeName;
+    private final DelayQueue<TimerTaskList> delayQueue = new DelayQueue<>();
 
-    private Long tickMs;
+    private final AtomicInteger taskCounter = new AtomicInteger(0);
 
-    private Integer wheelSize;
-
-    private Long startMs;
-
-    private DelayQueue<TimerTaskList> delayQueue = new DelayQueue<>();
-
-    private AtomicInteger taskCounter = new AtomicInteger(0);
-
-    private TimingWheel timingWheel;
+    private final TimingWheel timingWheel;
 
     /**
      * Locks used to protect data structures while ticking
      */
-    private ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
-    private ReentrantReadWriteLock.ReadLock readLock = readWriteLock.readLock();
+    private final ReentrantReadWriteLock.ReadLock readLock = readWriteLock.readLock();
 
-    private ReentrantReadWriteLock.WriteLock writeLock = readWriteLock.writeLock();
+    private final ReentrantReadWriteLock.WriteLock writeLock = readWriteLock.writeLock();
 
     public SystemTimer(String executeName) {
-        this.executeName = executeName;
-        tickMs = 1L;
-        wheelSize = 20;
-        startMs = Time.getHiresClockMs();
-        taskExecutor = new ThreadPoolExecutor(100, 100,
+        Long tickMs = 1L;
+        Integer wheelSize = 20;
+        Long startMs = Time.getHiresClockMs();
+        taskExecutor = new ThreadPoolExecutor(1, 1,
                 0L, TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<>(Integer.MAX_VALUE), new ThreadFactory() {
-            @Override
-            public Thread newThread(Runnable r) {
-                return new Thread(r, executeName);
-            }
-        });
+                new LinkedBlockingQueue<>(Integer.MAX_VALUE), r -> new Thread(r, "executor" + executeName));
         timingWheel = new TimingWheel(tickMs, wheelSize, startMs, taskCounter, delayQueue);
     }
 
@@ -68,7 +54,7 @@ public class SystemTimer implements Timer, Function<TimerTaskEntry, Void> {
      * Advance the internal clock, executing any tasks whose expiration has been
      * reached within the duration of the passed timeout.
      *
-     * @param timeoutMs
+     * @param timeoutMs timeoutMs
      * @return whether or not any tasks were executed
      */
     @Override
@@ -107,7 +93,7 @@ public class SystemTimer implements Timer, Function<TimerTaskEntry, Void> {
     }
 
     /**
-     * ;     * Shutdown the timer service, leaving pending tasks unexecuted
+     * ;     * Shutdown the timer service, leaving pending tasks unexpected
      */
     @Override
     public void shutdown() {

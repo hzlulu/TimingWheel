@@ -33,11 +33,6 @@ public abstract class TimerTask implements Runnable {
         }
     }
 
-    @Override
-    public void run() {
-        System.out.println("do the job");
-    }
-
     public TimerTaskEntry getTimerTaskEntry() {
         return timerTaskEntry;
     }
